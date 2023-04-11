@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import '../Login/login.css'
 import { useSnackbar } from "notistack";
 import { useForm } from 'react-hook-form'
@@ -10,11 +10,6 @@ export default function Register() {
     const { register, handleSubmit, formState: { errors }, getValues } = useForm()
     const navigate = useNavigate()
     const { enqueueSnackbar } = useSnackbar()
-
-    useEffect(() => {
-        let isLoggedIn = localStorage.getItem('Login')
-        if (isLoggedIn) navigate('/', { replace: true })
-    })
 
     const OnSubmit = async (data) => {
 
@@ -35,14 +30,11 @@ export default function Register() {
                 },
                 body: JSON.stringify({ 'username': name, 'password': password })
             })
-            console.log("Request send")
 
             if (response.ok) {
                 const data = await response.json()
-                if (data.msg === "success") {
-                    // Go to Login page
-                    console.log("Success")
-                    enqueueSnackbar("Registration Successfull", { autoHideDuration: 2000, variant: 'success' })
+                if (response.status === 201) {
+                    enqueueSnackbar(data.msg, { autoHideDuration: 2000, variant: 'success' })
                     navigate("/", { replace: true })
                 }
                 else {
@@ -59,7 +51,7 @@ export default function Register() {
             }
             else {
                 //Server side error
-                console.log(response.status)
+                console.log(response.status + " " + response.statusText)
             }
         }
         catch (e) {

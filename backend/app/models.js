@@ -3,6 +3,7 @@ const Schema = mongoose.Schema
 
 
 const userSchema = Schema({
+
     username: {
         type: String,
         required: true,
@@ -17,9 +18,10 @@ const userSchema = Schema({
     refresh: {
         type: String,
         unique: true
-    }
+    },
+}, {
+    strict: true// though by default it is true
 });
-
 
 const taskSchema = Schema({
     user: {

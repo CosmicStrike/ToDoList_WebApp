@@ -1,8 +1,7 @@
-import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App'
 import { SnackbarProvider } from 'notistack'
-import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './Contexts/AuthProvider';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -12,9 +11,9 @@ root.render(
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       preventDuplicate
     >
-      <BrowserRouter>
+      <AuthProvider>
         <App />
-      </BrowserRouter>
+      </AuthProvider>
     </SnackbarProvider>
   </>
 );

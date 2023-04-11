@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import TaskCard from "./taskCard.";
+import AuthContext from "../Contexts/AuthProvider";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Main() {
     const [todos, setToDos] = useState([])
+
+    const { authUser, setAuthUser } = useContext(AuthContext)
+    const navigate = useNavigate()
 
     useEffect(() => {
         async function fetchData() {
@@ -16,23 +22,27 @@ export default function Main() {
                         'Accept': 'application/json',
                     }
                 })
-
+                console.log("Before Response")
                 if (response.ok) {
                     const data = await response.json()
-                    if (data.msg === 'success') {
+                    console.log(data.msg)
+                    console.log(data.data)
+                    if (response.status === 200) {
                         // Display the data onto screen
-                        console.log(data)
                         data.data.forEach(element => {
                             element.deadline = new Date(element.deadline)
                         });
                         setToDos(data.data)
+                    }
+                    else if (response.status === 401) {
+                        // Unauthorized User; So loggout
+                        setAuthUser(false)
                     }
                 }
             } catch (err) {
                 console.log(err)
             }
         }
-
         fetchData()
 
     }, [])
@@ -66,7 +76,7 @@ export default function Main() {
 
             if (response.ok) {
                 let data1 = await response.json()
-                if (data1.msg === 'success') {
+                if (response.status === 201) {
                     // Show that data on screen
                     let task = {
                         title: data['Title'],
@@ -89,11 +99,11 @@ export default function Main() {
                     })
 
                 }
+                else if (response.status === 403) {
+                    // Loggout
+                    setAuthUser(false)
+                }
             }
-            else {
-
-            }
-
         } catch (err) {
             console.log(err)
         }
@@ -105,8 +115,29 @@ export default function Main() {
     }
 
 
-    const LoggodOut = () => {
+    const LoggodOut = async () => {
+        // Loggout
+        try {
+            const response = await fetch('http://localhost:5000/api/logout', {
+                method: 'POST',
+                mode: 'cors',
+                'credentials': 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
 
+            if (response.ok) {
+                const data = await response.json();
+                if (response.status === 201)
+                    setAuthUser(false)
+                else if (response.status === 401) {
+                    navigate('/', { replace: true })
+                }
+            }
+        }
+        catch (err) { console.log(err) }
     }
 
     const OnComplete = async (todo_id) => {
@@ -124,8 +155,7 @@ export default function Main() {
             })
 
             if (response.ok) {
-                const data = await response.json()
-                if (data.msg === 'success') {
+                if (response.status === 200) {
                     // Successfully deleted from server
                     setToDos(() => {
                         let arr = []
@@ -135,6 +165,10 @@ export default function Main() {
                         }
                         return arr
                     })
+                }
+                else if (response.status === 403) {
+                    // Loggout
+                    setAuthUser(false)
                 }
             }
         }
@@ -184,7 +218,7 @@ export default function Main() {
                     }
                 </div>
             </div>
-            <button className="text-white bg-blue-800 rounded-3xl h-10 w-24 hover:bg-blue-500 lg:w-40" type="button" onClick={() => LoggodOut}>Logout</button>
+            <button className="text-white bg-blue-800 rounded-3xl h-10 w-24 hover:bg-blue-500 lg:w-40" onClick={() => { LoggodOut() }}>Logout</button>
         </div>
     )
 }

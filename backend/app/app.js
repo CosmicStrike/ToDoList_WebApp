@@ -2,15 +2,13 @@ require("dotenv").config()
 const express = require("express")
 const morgan = require("morgan")
 const api = require("./api")
-const auth = require("./auth")
 const { default: mongoose } = require("mongoose")
 const cookieParser = require('cookie-parser')
-const { urlencoded } = require("express")
 const app = express()
 
 
+mongoose.set('strictQuery', true)// will not search by non-attributes of a schema, i.e attributes not present in schema
 mongoose.connect(process.env.DATABASE_URL)//connecition 
-mongoose.set('strictQuery', false)
 
 // Only to check if database is connected or not 
 const db = mongoose.connection
@@ -27,12 +25,19 @@ app.use(function (req, res, next) {
 })
 
 
-app.use(morgan('dev'))
-app.use(express.json())
-app.use(cookieParser())
+app.use(morgan('dev')) // outputs on console errors, any request 
+app.use(express.json()) // It parses the data send to us using json objects, basically we can access json data/objects
+app.use(cookieParser())// parses the cookies send by client/front-end
+app.use(express.urlencoded({ extended: false }))
+/* 
+    Urlencoded: data send to server using forms is by default encoded using url-encoding which is of format x-www-form-urlencoded (it's Content-Type)
+                we can also send such data using api just by  changing content-type : application/json to x-www-form-urlencoded
+
+    extended: false => uses query-string library for parsing, but that library cannot parse nested parameters send to server using forms/api call 
+    extended: true => uses qs library for parsing, it can parse nested parameters into nested objects 
+*/
 
 
 app.use('/api', api)
-app.use('/auth', auth)
 
 module.exports = app

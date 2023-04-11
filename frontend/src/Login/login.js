@@ -1,12 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useContext } from "react";
 import './login.css'
 import { useForm } from 'react-hook-form'
 import { Link } from "react-router-dom";
 import { useSnackbar } from "notistack";
+import AuthContext from "../Contexts/AuthProvider";
+
 
 export default function Login() {
     const { register, handleSubmit, formState: { errors } } = useForm()
     const { enqueueSnackbar } = useSnackbar()
+    const { authUser, setAuthUser } = useContext(AuthContext)
+
 
     const OnSubmit = async (data) => {
         console.log(data)
@@ -31,13 +35,9 @@ export default function Login() {
             console.log("Request send")
 
             if (response.ok) {
-                console.log("Request is positive")
                 const data = await response.json()
-                if (data.msg === "success") {
-                    localStorage.setItem('Login', true)
-                    localStorage.setItem('uname', name)
-                    window.location.reload()
-                }
+                if (response.status === 200)
+                    setAuthUser(true)
                 else {
                     enqueueSnackbar(data.msg, {
                         variant: 'error',
