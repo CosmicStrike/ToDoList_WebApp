@@ -1,12 +1,12 @@
 require('dotenv').config
 const express = require("express")
 const mongoose = require("mongoose")
+const argon = require('argon2')
 const User = require('./models').user
 const Task = require('./models').task
 const { GenerateAccessToken, GenerateRefreshToken, auth } = require('../middlewares/auth')
 const router = express.Router()
 
-// TODO: Access and Refresh Token - JWT
 router.get('/', auth, async (req, res) => {
     try {
         const user = await User.findById(req.uid)
@@ -60,13 +60,13 @@ router.put('/login', async (req, res) => {
         const passwd = req.body.password;
 
         const user = await User.findOne({ username: uname })
-        if (user === null) return res.status(200).json({ msg: "User not found" })
+        if (user === null) return res.status(403).json({ msg: "User not found" })
 
-        if (user.password !== passwd) return res.status(200).json({ msg: "Password is incorrect" })
+        if (!await argon.verify(user.password, passwd)) return res.status(403).json({ msg: "Password is incorrect" })
 
         const token = JSON.stringify({ 'access': GenerateAccessToken(user._id), 'refresh': await GenerateRefreshToken(user._id) })
         res.setHeader(`Set-Cookie`, `${process.env.TOKEN_NAME}=${token}; Secure; HttpOnly; Path=/; SameSite=Strict; Expires=${new Date(new Date().getTime() + parseInt(process.env.COOKIE_EXPIRES_IN))}`)
-        return res.status(200).json({ msg: "Successful Login", uid: user._id });
+        return res.status(200).json({ msg: "Successful Login" });
     } catch (err) {
         console.log(err)
         return res.status(500).json({ msg: "Try again later" })
@@ -80,16 +80,16 @@ router.post('/register', async (req, res) => {
         const passwd = req.body.password
 
         const user = await User.findOne({ username: uname }).collation({ locale: 'en_US', strength: 1 })
-        if (user) return res.status(200).json({ msg: "User already exists" })
+        if (user) return res.status(403).json({ msg: "User already exists" })
         const obj = new User({
             username: uname,
-            password: passwd,
+            password: await argon.hash(passwd),
         })
         await obj.save()
         return res.status(201).json({ msg: "Successful Registeration" });
     }
     catch (err) {
-        console.log("ERROR \n\n\n: ", err)
+        console.log("ERROR \n: ", err)
         return res.sendStatus(500);
     }
 })

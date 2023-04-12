@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
-import Login from './Login/login'
-import Register from './Register/register'
+import Login from './Pages/login'
+import Register from './Pages/register'
 import { Routes, Route, BrowserRouter } from 'react-router-dom'
-import Main from './Main/main'
+import Main from './Pages/main'
 import { PageNotFound } from "./Components/404";
 import './index.css'
 import AuthContext from "./Contexts/AuthProvider";

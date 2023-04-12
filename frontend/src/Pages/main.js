@@ -1,14 +1,10 @@
 import React, { useContext, useEffect, useState } from "react";
-import TaskCard from "./taskCard.";
+import TaskCard from "../Components/taskCard.";
 import AuthContext from "../Contexts/AuthProvider";
-import { useNavigate } from "react-router-dom";
-
 
 export default function Main() {
     const [todos, setToDos] = useState([])
-
-    const { authUser, setAuthUser } = useContext(AuthContext)
-    const navigate = useNavigate()
+    const { setAuthUser } = useContext(AuthContext)
 
     useEffect(() => {
         async function fetchData() {
@@ -22,11 +18,9 @@ export default function Main() {
                         'Accept': 'application/json',
                     }
                 })
-                console.log("Before Response")
+
                 if (response.ok) {
                     const data = await response.json()
-                    console.log(data.msg)
-                    console.log(data.data)
                     if (response.status === 200) {
                         // Display the data onto screen
                         data.data.forEach(element => {
@@ -34,10 +28,10 @@ export default function Main() {
                         });
                         setToDos(data.data)
                     }
-                    else if (response.status === 401) {
-                        // Unauthorized User; So loggout
-                        setAuthUser(false)
-                    }
+                }
+                else if (response.status === 401) {
+                    // Unauthorized User; So loggout
+                    setAuthUser(false)
                 }
             } catch (err) {
                 console.log(err)
@@ -50,17 +44,16 @@ export default function Main() {
     //Post the ToDo 
     const formSubmit = async (event) => {
         event.preventDefault();
-        // console.log(event.target)
+
         const form = new FormData(event.target);
         const data = Object.fromEntries(form.entries())
 
 
-        if (data['Title'].length === 0) { console.log("Title can not be a empty"); return; }
+        if (data['Title'].length === 0) { return; }
         let date;
 
         if (data['Deadline'] === '') date = new Date()
         else date = new Date(data['Deadline'])
-        // console.log(date)
         try {
             const response = await fetch('http://localhost:5000/api/', {
                 method: 'POST',
@@ -74,6 +67,7 @@ export default function Main() {
 
             })
 
+            console.log(response.ok)
             if (response.ok) {
                 let data1 = await response.json()
                 if (response.status === 201) {
@@ -99,11 +93,12 @@ export default function Main() {
                     })
 
                 }
-                else if (response.status === 403) {
-                    // Loggout
-                    setAuthUser(false)
-                }
             }
+            else if (response.status === 401) {
+                // Loggout
+                setAuthUser(false)
+            }
+
         } catch (err) {
             console.log(err)
         }
@@ -129,19 +124,16 @@ export default function Main() {
             })
 
             if (response.ok) {
-                const data = await response.json();
                 if (response.status === 201)
                     setAuthUser(false)
-                else if (response.status === 401) {
-                    navigate('/', { replace: true })
-                }
+            } else if (response.status === 401) {
+                window.location.reload()
             }
         }
         catch (err) { console.log(err) }
     }
 
     const OnComplete = async (todo_id) => {
-        console.log(todo_id)
         try {
             const response = await fetch('http://localhost:5000/api/', {
                 method: 'DELETE',
@@ -166,10 +158,10 @@ export default function Main() {
                         return arr
                     })
                 }
-                else if (response.status === 403) {
-                    // Loggout
-                    setAuthUser(false)
-                }
+            }
+            else if (response.status === 401) {
+                // Loggout
+                setAuthUser(false)
             }
         }
         catch (err) {
@@ -199,16 +191,11 @@ export default function Main() {
                 </form>
             </div>
             <div className="mx-1 w-full h-auto my-10 md:grow md:ml-10 lg:my-2">
-                <div>
-                    <label className="mx-5 text-sm md:text-base" htmlFor={"search"}>Search</label>
-                    <input className="w-4/5 h-8 p-4 rounded-full text-sm md:text-base bg-stone-100" type={"search"} id={"SearchTitle"} placeholder={"Search Title"}></input>
-                </div>
-                <div className="flex flex-col bg-white">
+                <div className="flex flex-col">
                     <div className="flex flex-row items-center font-sans text-xs h-10 md:text-sm">
                         <div className="ml-1 md:ml-2 SrNo">Sr No.</div>
                         <div className="ml-2 md:ml-8 DeadLine">Deadline</div>
                         <div className="ml-auto md:ml-10 Title w-1/2 mx-1 md:4/5 lg:w-2/3">Title</div>
-
                     </div>
                     {(todos.length === 0) ? NoTask :
                         todos.map((todo, index) => {
